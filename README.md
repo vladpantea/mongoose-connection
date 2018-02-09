@@ -18,7 +18,7 @@ Module responsible with mongodb connection. Options took from env settings
     //init express
 
     //Mongodb Connect
-    const mongooseConnection = require('mongoose-connectx')(mongoose,Promise);
+    const mongooseConnection = require('mongoose-connectx')(mongoose,bluebird);
     mongooseConnection.connect();
     //endregion
 
