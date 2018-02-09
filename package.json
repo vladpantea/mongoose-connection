@@ -1,0 +1,19 @@
+{
+    "name": "mongoose-connect",
+    "version": "1.0.0",
+    "description": "Mongoose connect module",
+    "main": "index.js",
+    "scripts": {
+      "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": {
+      "name": "vladpantea",
+      "email": "vlad.pantea@gmail.com",
+      "url": "https://github.com/vladpantea"
+    },  
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/vladpantea/mongoose-connection.git"
+    },
+    "license": "MIT"
+  }
