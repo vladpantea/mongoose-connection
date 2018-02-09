@@ -1,54 +1,69 @@
 'use strict';
 
-const mongooseConn = function(mongoose,settings){
-    const options = {
-        reconnectTries: settings.MONGOOSE_RETRY || 10, 
-        reconnectInterval: settings.MONGOOSE_RECONNECTINTERVAL || 1000,
-        poolSize: settings.MONGOOSE_POOLSIZE || 5,
-        // If not connected, return errors immediately rather than waiting for reconnect
-        bufferMaxEntries: settings.MONGOOSE_BUFFERMAXENTRIES || 0,
-        keepAlive: settings.MONGOOSE_KEEPALIVE || true,
-        connectTimeoutMS : settings.MONGOOSE_CONNECTTIMEOUTMS || 30000
-    };
+const mongooseConn = function(mongoose,Promise){
+    const getProductionURI = function(){
+        let connectionString = 'mongodb://';
+        let database = process.env.ENVIRONMENT === 'test' ? process.env.STORE_MONGODB_DATABASE_TEST : process.env.STORE_MONGODB_DATABASE;
 
-    const buildConnString = function(){
-        let toReturn = '';
-        if(settings.ENVIRONMENT === 'development'){
-            toReturn += 'mongodb://localhost/'+settings.DB;
-        }else if(settings.ENVIRONMENT === 'test'){
-            toReturn += 'mongodb://localhost/'+settings.DB_TEST;
-        }else{
-            toReturn += 'mongodb://'+settings.HOST+'/'+settings.DB;
+        if (process.env.STORE_MONGODB_USERNAME && process.env.STORE_MONGODB_PASSWORD) {
+          connectionString = connectionString + process.env.STORE_MONGODB_USERNAME + ':' + process.env.STORE_MONGODB_PASSWORD + '@';
         }
-
-        return toReturn;
+        connectionString = connectionString + process.env.STORE_MONGODB_HOST + '/' + database + '?authSource=admin';  
+        console.log('connectionString: ' + connectionString);
+        return connectionString;
     };
 
-    const conn = function(){
-        mongoose.connect(buildConnString(),options);
+    const _promisefy = function(){
+        Promise.promisifyAll(mongoose);
+        mongoose.Promise = Promise;
+    };
 
-        mongoose.connection.on('connected', function () {  
-            console.log('Mongoose default connection open');
-        }); 
+    const options = {
+        server : {
+            "socketOptions" : {
+              "keepAlive" : process.env.MONGOOSE_KEEPALIVE || 300000,
+              "connectTimeoutMS" : process.env.MONGOOSE_CONNECTTIMEOUTMS || 3000
+            }
+        },
+        replset : {
+            "socketOptions" : {
+              "keepAlive" : process.env.MONGOOSE_KEEPALIVE || 300000,
+              "connectTimeoutMS" : process.env.MONGOOSE_CONNECTTIMEOUTMS || 3000
+            }
+        },
+        reconnectTries: process.env.MONGOOSE_RETRY || 5, 
+        reconnectInterval: process.env.MONGOOSE_RECONNECTINTERVAL || 10000,
+        poolSize: process.env.MONGOOSE_POOLSIZE || 5,
+    };
+
+    const connect = function(){
+        _promisefy();
+        let uri = getProductionURI();
+
+        mongoose.connect(uri,options);
         
-        mongoose.connection.on('error',function (err) {  
-            console.log('Mongoose default connection error: ' + err);
-        }); 
-        
-        mongoose.connection.on('disconnected', function () {  
-            console.log('Mongoose default connection disconnected'); 
+        mongoose.connection.on('error', err => {
+            console.log({ event: 'Mongoose:error', ...err });
+            process.exit(0);
         });
 
-        process.on('SIGINT', function() {  
-            mongoose.connection.close(function () { 
-              console.log('Mongoose default connection disconnected through app termination'); 
-              process.exit(0); 
-            }); 
-        }); 
-    };
+        mongoose.connection.on('connected', () => console.log({ event: 'Mongoose:connected' }));
+        mongoose.connection.on('disconnected', () => console.log({ event: 'Mongoose:disconnected' }));
+        mongoose.connection.on('reconnected', () => console.log({ event: 'Mongoose:reconnected' }));
+
+        function handleClose(){
+            mongoose.connection.close(() => {
+                console.log('Mongoose connection closed. Process will exit...');
+                process.exit(0);
+            });
+        }
+
+        process.on('SIGINT', handleClose);
+        process.on('SIGTERM', handleClose);
+    };  
 
     return {
-        conn: conn
+        connect: connect
     };
 };
 
