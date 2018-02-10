@@ -9,7 +9,6 @@ const mongooseConn = function(mongoose,Promise){
           connectionString = connectionString + process.env.STORE_MONGODB_USERNAME + ':' + process.env.STORE_MONGODB_PASSWORD + '@';
         }
         connectionString = connectionString + process.env.STORE_MONGODB_HOST + '/' + database + '?authSource=admin';  
-        console.log('connectionString: ' + connectionString);
         return connectionString;
     };
 
