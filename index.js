@@ -2,6 +2,9 @@
 
 const mongooseConn = function(mongoose,Promise){
     const getProductionURI = function(){
+        if (process.env.STORE_MONGODB_CONNECTION_STRING)
+            return process.env.STORE_MONGODB_CONNECTION_STRING;
+        
         let connectionString = 'mongodb://';
         let database = process.env.ENVIRONMENT === 'test' ? process.env.STORE_MONGODB_DATABASE_TEST : process.env.STORE_MONGODB_DATABASE;
 
