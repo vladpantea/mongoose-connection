@@ -12,7 +12,12 @@ const mongooseConn = function(mongoose,Promise){
         if (process.env.STORE_MONGODB_USERNAME && process.env.STORE_MONGODB_PASSWORD) {
           connectionString = connectionString + process.env.STORE_MONGODB_USERNAME + ':' + process.env.STORE_MONGODB_PASSWORD + '@';
         }
-        connectionString = connectionString + process.env.STORE_MONGODB_HOST + '/' + database + '?authSource=admin';  
+        
+        connectionString = connectionString + process.env.STORE_MONGODB_HOST + '/' + database + '?authSource=admin';
+        
+        if (process.env.STORE_MONGODB_REPLICASET) {
+            connectionString = connectionString + '&replicaSet=' + process.env.STORE_MONGODB_REPLICASET;
+        }
         return connectionString;
     };
 
