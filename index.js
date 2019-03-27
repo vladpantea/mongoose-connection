@@ -1,12 +1,13 @@
 'use strict';
 
 const mongooseConn = function(mongoose,Promise){
+    const database = process.env.ENVIRONMENT === 'test' ? process.env.STORE_MONGODB_DATABASE_TEST : process.env.STORE_MONGODB_DATABASE;
+    
     const getProductionURI = function(){
         if (process.env.STORE_MONGODB_CONNECTION_STRING)
             return process.env.STORE_MONGODB_CONNECTION_STRING;
         
         let connectionString = 'mongodb://';
-        let database = process.env.ENVIRONMENT === 'test' ? process.env.STORE_MONGODB_DATABASE_TEST : process.env.STORE_MONGODB_DATABASE;
 
         if (process.env.STORE_MONGODB_USERNAME && process.env.STORE_MONGODB_PASSWORD) {
           connectionString = connectionString + process.env.STORE_MONGODB_USERNAME + ':' + process.env.STORE_MONGODB_PASSWORD + '@';
@@ -36,6 +37,7 @@ const mongooseConn = function(mongoose,Promise){
         reconnectTries: process.env.MONGOOSE_RETRY || 5, 
         reconnectInterval: process.env.MONGOOSE_RECONNECTINTERVAL || 10000,
         poolSize: process.env.MONGOOSE_POOLSIZE || 5,
+        dbName: database,
     };
 
     const connect = function(){
